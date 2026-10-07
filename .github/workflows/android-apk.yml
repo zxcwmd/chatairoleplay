@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -50,10 +50,25 @@ jobs:
           mkdir -p ../artifacts
           cp app/build/outputs/apk/debug/app-debug.apk ../artifacts/Miry-Android-debug.apk
 
-      - name: Upload installer
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v7
         with:
           name: miry-android-installer
           path: artifacts/Miry-Android-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish direct APK download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view android-installer --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create android-installer \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Миры — установщик Android" \
+              --notes "Последняя debug-сборка Android-приложения. Сборка автоматически обновляется вместе с веткой arena/b846dd14-chatairoleplay." \
+              --prerelease
+          fi
+          gh release upload android-installer artifacts/Miry-Android-debug.apk \
+            --repo "$GITHUB_REPOSITORY" --clobber
