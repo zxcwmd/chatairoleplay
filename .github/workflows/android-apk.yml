@@ -1,0 +1,59 @@
+name: Build Android installer
+
+on:
+  push:
+    branches:
+      - arena/b846dd14-chatairoleplay
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build web app and sync Android project
+        run: npm run android:sync
+
+      - name: Build debug-signed APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew --no-daemon assembleDebug
+          mkdir -p ../artifacts
+          cp app/build/outputs/apk/debug/app-debug.apk ../artifacts/Miry-Android-debug.apk
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: miry-android-installer
+          path: artifacts/Miry-Android-debug.apk
+          if-no-files-found: error
+          retention-days: 30

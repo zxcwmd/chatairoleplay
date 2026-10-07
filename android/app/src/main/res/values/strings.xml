@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Миры</string>
+    <string name="title_activity_main">Миры</string>
+    <string name="package_name">app.miry.roleplay</string>
+    <string name="custom_url_scheme">app.miry.roleplay</string>
+</resources>
